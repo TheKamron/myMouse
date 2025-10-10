@@ -1,0 +1,22 @@
+{
+  "name": "mymouse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "build": "pkg . --targets node18-win-x64 --output MyMouse.exe"  
+  },
+  "bin": "server.js",
+  "author": "offcodev",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-handlebars": "^8.0.3",
+    "nodemon": "^3.1.10",
+    "robotjs": "^0.6.0",
+    "socket.io": "^4.8.1",
+    "ws": "^8.18.3"
+  }
+}
