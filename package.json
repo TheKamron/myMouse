@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "build": "pkg index.js --targets node18-win-x64 --output MyMouse.exe"  
+    "start": "nodemon index.js",
+    "build": "pkg index.js --targets node18-win-x64 --output MyMouse.exe"
   },
   "bin": "index.js",
   "author": "offcodev",
   "license": "ISC",
   "dependencies": {
+    "@nut-tree/nut-js": "^3.1.2",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.3",
     "nodemon": "^3.1.10",
@@ -19,8 +20,8 @@
     "ws": "^8.18.3"
   },
   "pkg": {
-  "assets": [
-    "views/**/*"
-  ]
-}
+    "assets": [
+      "views/**/*"
+    ]
+  }
 }

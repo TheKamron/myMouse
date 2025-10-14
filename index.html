@@ -1,13 +1,13 @@
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" 
+  <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>{{title}}</title>
   <style>
     html, body {
       margin: 0;
       height: 100%;
-      overflow: hidden; /* ✅ Bo‘sh joyni scroll qilmaslik */
+      overflow: hidden;
       background: radial-gradient(circle at center, #1a1a1a, #000);
       display: flex;
       justify-content: center;
@@ -32,7 +32,7 @@
       flex-direction: column;
       overflow: hidden;
       position: relative;
-      touch-action: none; /* ✅ Zoom va scrollni to‘liq bloklaydi */
+      touch-action: none;
     }
 
     .buttons {
@@ -90,62 +90,59 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const touchpad = document.getElementById("touchpad");
-    const led = document.getElementById("led");
-    const leftBtn = document.getElementById("left");
-    const rightBtn = document.getElementById("right");
-    const mouse = document.getElementById("mouse");
+<script>
+const socket = io();
 
-    let lastX, lastY, lastTap = 0;
+const touchpad = document.getElementById("touchpad");
+let mode = null; // "move" yoki "scroll"
+let lastX = 0;
+let lastY = 0;
 
-    // 🔒 Zoomni bloklash (ikki marta teginganda)
-    document.addEventListener("touchstart", function (e) {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTap;
-      if (tapLength < 300 && tapLength > 0) {
-        e.preventDefault(); // zoom yoki double-tap actionni to‘xtatadi
-      }
-      lastTap = currentTime;
-    });
+// === TOUCH START ===
+touchpad.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 1) {
+    mode = "move";
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    mode = "scroll";
+    // ikki barmoq orasidagi o‘rta nuqta
+    lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+  }
+});
 
-    // 🔵 Touchpad movement
-    touchpad.addEventListener("touchstart", e => {
-      const touch = e.touches[0];
-      lastX = touch.clientX;
-      lastY = touch.clientY;
-    });
+// === TOUCH MOVE ===
+touchpad.addEventListener("touchmove", (e) => {
+  e.preventDefault();
 
-    touchpad.addEventListener("touchmove", e => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const dx = touch.clientX - lastX;
-      const dy = touch.clientY - lastY;
-      lastX = touch.clientX;
-      lastY = touch.clientY;
+  if (mode === "move" && e.touches.length === 1) {
+    const dx = e.touches[0].clientX - lastX;
+    const dy = e.touches[0].clientY - lastY;
 
-      socket.emit("move", { dx, dy });
-    });
+    socket.emit("move", { dx, dy });
 
-    // 🖱 Clicks
-    leftBtn.addEventListener("click", () => {
-      socket.emit("click", "left");
-      flashLed();
-    });
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+  }
 
-    rightBtn.addEventListener("click", () => {
-      socket.emit("click", "right");
-      flashLed();
-    });
+  if (mode === "scroll" && e.touches.length === 2) {
+    const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    const dy = lastY - currentY;
+    socket.emit("scroll", { dy });
+    lastY = currentY;
+  }
+});
 
-    function flashLed() {
-      led.style.background = "lime";
-      led.style.boxShadow = "0 0 15px lime";
-      setTimeout(() => {
-        led.style.background = "red";
-        led.style.boxShadow = "0 0 10px red";
-      }, 200);
-    }
-  </script>
+// === TOUCH END ===
+touchpad.addEventListener("touchend", (e) => {
+  if (e.touches.length === 0) {
+    mode = null;
+  }
+});
+
+// === Tugmalar ===
+document.getElementById("left").addEventListener("click", () => socket.emit("click", "left"));
+document.getElementById("right").addEventListener("click", () => socket.emit("click", "right"));
+</script>
+
 </body>
