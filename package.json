@@ -2,13 +2,12 @@
   "name": "mymouse",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
-  "type": "module",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "pkg . --targets node18-win-x64 --output MyMouse.exe"  
+    "start": "node index.js",
+    "build": "pkg index.js --targets node18-win-x64 --output MyMouse.exe"  
   },
-  "bin": "server.js",
+  "bin": "index.js",
   "author": "offcodev",
   "license": "ISC",
   "dependencies": {
@@ -18,5 +17,10 @@
     "robotjs": "^0.6.0",
     "socket.io": "^4.8.1",
     "ws": "^8.18.3"
-  }
+  },
+  "pkg": {
+  "assets": [
+    "views/**/*"
+  ]
+}
 }
