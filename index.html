@@ -1,9 +1,13 @@
+<!DOCTYPE html>
+<html lang="uz">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>{{title}}</title>
-  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MyMouse</title>
+  <link rel="stylesheet" href="/public/style.css" />
+
+  <!-- <style>
     html, body {
       margin: 0;
       height: 100%;
@@ -77,8 +81,10 @@
       border-radius: 50%;
       box-shadow: 0 0 10px red;
     }
-  </style>
+  </style> -->
+
 </head>
+
 <body>
   <div class="mouse" id="mouse">
     <div class="buttons">
@@ -90,59 +96,78 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-<script>
-const socket = io();
+  <script src="/public/script.js"></script>
 
-const touchpad = document.getElementById("touchpad");
-let mode = null; // "move" yoki "scroll"
-let lastX = 0;
-let lastY = 0;
+  <!-- <script>
+    async function initSocket() {
+      try {
+        const res = await fetch("/__ip__");
+        const ip = (await res.text()).trim();
+        const origin = `http://${ip}:3000`;
 
-// === TOUCH START ===
-touchpad.addEventListener("touchstart", (e) => {
-  if (e.touches.length === 1) {
-    mode = "move";
-    lastX = e.touches[0].clientX;
-    lastY = e.touches[0].clientY;
-  } else if (e.touches.length === 2) {
-    mode = "scroll";
-    // ikki barmoq orasidagi o‘rta nuqta
-    lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-  }
-});
+        console.log("[client] connecting to socket:", origin);
+        const socket = io(origin);
 
-// === TOUCH MOVE ===
-touchpad.addEventListener("touchmove", (e) => {
-  e.preventDefault();
+        const touchpad = document.getElementById("touchpad");
+        let mode = null;
+        let lastX = 0;
+        let lastY = 0;
+        let tapTimeout = null; // bitta bosish uchun
 
-  if (mode === "move" && e.touches.length === 1) {
-    const dx = e.touches[0].clientX - lastX;
-    const dy = e.touches[0].clientY - lastY;
+        socket.on("connect", () => console.log("[client] connected", socket.id));
+        socket.on("disconnect", () => console.log("[client] disconnected"));
 
-    socket.emit("move", { dx, dy });
+        // === TOUCH START ===
+        touchpad.addEventListener("touchstart", (e) => {
+          if (e.touches.length === 1) {
+            mode = "move";
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
 
-    lastX = e.touches[0].clientX;
-    lastY = e.touches[0].clientY;
-  }
+            // bir barmoq bilan bosilganida left click uchun tayyor
+            tapTimeout = setTimeout(() => tapTimeout = null, 200);
+          } else if (e.touches.length === 2) {
+            mode = "scroll";
+            lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          }
+        });
 
-  if (mode === "scroll" && e.touches.length === 2) {
-    const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-    const dy = lastY - currentY;
-    socket.emit("scroll", { dy });
-    lastY = currentY;
-  }
-});
+        // === TOUCH MOVE ===
+        touchpad.addEventListener("touchmove", (e) => {
+          e.preventDefault();
+          if (mode === "move" && e.touches.length === 1) {
+            const dx = e.touches[0].clientX - lastX;
+            const dy = e.touches[0].clientY - lastY;
+            socket.emit("move", { dx, dy });
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+          } else if (mode === "scroll" && e.touches.length === 2) {
+            const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            const dy = lastY - currentY;
+            socket.emit("scroll", { dy });
+            lastY = currentY;
+          }
+        }, { passive: false });
 
-// === TOUCH END ===
-touchpad.addEventListener("touchend", (e) => {
-  if (e.touches.length === 0) {
-    mode = null;
-  }
-});
+        // === TOUCH END ===
+        touchpad.addEventListener("touchend", (e) => {
+          if (tapTimeout && e.touches.length === 0) {
+            socket.emit("click", "left"); // left click
+          }
+          tapTimeout = null;
+          if (e.touches.length === 0) mode = null;
+        });
 
-// === Tugmalar ===
-document.getElementById("left").addEventListener("click", () => socket.emit("click", "left"));
-document.getElementById("right").addEventListener("click", () => socket.emit("click", "right"));
-</script>
+        document.getElementById("left").addEventListener("click", () => socket.emit("click", "left"));
+        document.getElementById("right").addEventListener("click", () => socket.emit("click", "right"));
+      } catch (err) {
+        console.error("Failed to init socket:", err);
+        alert("Server bilan ulanishda xatolik. Iltimos firewall va Wi-Fi’ni tekshiring.\n\nError: " + (err && err.message));
+      }
+    }
 
+    initSocket();
+  </script> -->
 </body>
+
+</html>

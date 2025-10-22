@@ -1,90 +1,68 @@
-// // script.js
-// const socket = io();
-// const pad = document.getElementById("pad");
-// const leftBtn = document.getElementById("leftBtn");
-// const rightBtn = document.getElementById("rightBtn");
-// const calibrateBtn = document.getElementById("calibrate");
-// const sensRange = document.getElementById("sensitivity");
-// const sensVal = document.getElementById("sensVal");
-// const statText = document.getElementById("statText");
+ async function initSocket() {
+      try {
+        const res = await fetch("/__ip__");
+        const ip = (await res.text()).trim();
+        const origin = `http://${ip}:3000`;
 
-// let lastX = null;
-// let lastY = null;
-// let pointerDown = false;
-// let accelX = 0;
-// let accelY = 0;
-// let sendScheduled = false;
-// let queuedDx = 0;
-// let queuedDy = 0;
+        console.log("[client] connecting to socket:", origin);
+        const socket = io(origin);
 
-// const sensitivity = () => parseFloat(sensRange.value || 2);
+        const touchpad = document.getElementById("touchpad");
+        let mode = null;
+        let lastX = 0;
+        let lastY = 0;
+        let tapTimeout = null; // bitta bosish uchun
 
-// // show sensitivity
-// sensRange.addEventListener("input", () => {
-//   sensVal.innerText = parseFloat(sensRange.value).toFixed(1);
-// });
+        socket.on("connect", () => console.log("[client] connected", socket.id));
+        socket.on("disconnect", () => console.log("[client] disconnected"));
 
-// // pointer handling (works for touch & mouse)
-// pad.addEventListener("pointerdown", (e) => {
-//   pointerDown = true;
-//   lastX = e.clientX;
-//   lastY = e.clientY;
-//   pad.setPointerCapture(e.pointerId);
-// });
+        // === TOUCH START ===
+        touchpad.addEventListener("touchstart", (e) => {
+          if (e.touches.length === 1) {
+            mode = "move";
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
 
-// pad.addEventListener("pointermove", (e) => {
-//   if (!pointerDown) return;
-//   const dx = e.clientX - lastX;
-//   const dy = e.clientY - lastY;
-//   lastX = e.clientX;
-//   lastY = e.clientY;
+            // bir barmoq bilan bosilganida left click uchun tayyor
+            tapTimeout = setTimeout(() => tapTimeout = null, 200);
+          } else if (e.touches.length === 2) {
+            mode = "scroll";
+            lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          }
+        });
 
-//   // accumulate dx/dy to send latest on rAF
-//   queuedDx += dx;
-//   queuedDy += dy;
+        // === TOUCH MOVE ===
+        touchpad.addEventListener("touchmove", (e) => {
+          e.preventDefault();
+          if (mode === "move" && e.touches.length === 1) {
+            const dx = e.touches[0].clientX - lastX;
+            const dy = e.touches[0].clientY - lastY;
+            socket.emit("move", { dx, dy });
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+          } else if (mode === "scroll" && e.touches.length === 2) {
+            const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            const dy = lastY - currentY;
+            socket.emit("scroll", { dy });
+            lastY = currentY;
+          }
+        }, { passive: false });
 
-//   if (!sendScheduled) {
-//     sendScheduled = true;
-//     requestAnimationFrame(sendMove);
-//   }
-// });
+        // === TOUCH END ===
+        touchpad.addEventListener("touchend", (e) => {
+          if (tapTimeout && e.touches.length === 0) {
+            socket.emit("click", "left"); // left click
+          }
+          tapTimeout = null;
+          if (e.touches.length === 0) mode = null;
+        });
 
-// pad.addEventListener("pointerup", (e) => {
-//   pointerDown = false;
-//   lastX = null;
-//   lastY = null;
-//   queuedDx = 0;
-//   queuedDy = 0;
-// });
+        document.getElementById("left").addEventListener("click", () => socket.emit("click", "left"));
+        document.getElementById("right").addEventListener("click", () => socket.emit("click", "right"));
+      } catch (err) {
+        console.error("Failed to init socket:", err);
+        alert("Server bilan ulanishda xatolik. Iltimos firewall va Wi-Fi’ni tekshiring.\n\nError: " + (err && err.message));
+      }
+    }
 
-// // Fallback: touchstart/touchmove handled by pointer events above in modern browsers
-
-// function sendMove() {
-//   sendScheduled = false;
-//   // get and reset queued values
-//   const dx = queuedDx;
-//   const dy = queuedDy;
-//   queuedDx = 0;
-//   queuedDy = 0;
-
-//   if (dx === 0 && dy === 0) return;
-
-//   // send scaled dx/dy (we invert Y to match screen coords)
-//   socket.emit("move", { dx: dx * sensitivity(), dy: dy * sensitivity() });
-// }
-
-// // Clicks
-// leftBtn.addEventListener("touchstart", (e) => { e.preventDefault(); socket.emit("click", "left"); }, {passive:false});
-// leftBtn.addEventListener("click", () => socket.emit("click", "left"));
-
-// rightBtn.addEventListener("touchstart", (e) => { e.preventDefault(); socket.emit("click", "right"); }, {passive:false});
-// rightBtn.addEventListener("click", () => socket.emit("click", "right"));
-
-// // Calibrate
-// calibrateBtn.addEventListener("click", () => {
-//   socket.emit("calibrate");
-// });
-
-// // socket status
-// socket.on("connect", () => { statText.innerText = "Connected"; });
-// socket.on("disconnect", () => { statText.innerText = "Disconnected"; });
+    initSocket();
