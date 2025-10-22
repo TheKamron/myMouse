@@ -115,7 +115,9 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log("\n🌐 Server running on:");
   ips.forEach((ip) => console.log(`  👉 http://${ip}:${PORT}`));
   console.log("\n📱 Telefoningizdagi brauzerda shu manzillardan birini oching.");
+  console.log("\n ------------------------------------------------- \n DIQQAT: Kompyuteringiz va Telefoningiz bir xil \n  Wi-Figa ulanganligiga ishonch hosil qiling! \n ------------------------------------------------- ")
   console.log("\n O'chirish uchun ENTER tugmasini bosing...");
+  console.log("\n --------------- \n dev: -offcodev- \n ---------------");
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   rl.on("line", () => process.exit(0));
